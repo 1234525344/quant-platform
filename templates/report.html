@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>分析报告</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei',sans-serif;background:#0D1117;color:#F0F6FC;display:flex;min-height:100vh}
+.sidebar{width:200px;background:#111419;padding:20px 0;border-right:1px solid #30363D;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar .logo{font-size:16px;font-weight:bold;color:#58A6FF;padding:0 20px 20px;border-bottom:1px solid #30363D;margin-bottom:10px}
+.sidebar a{display:block;color:#8B949E;padding:10px 20px;text-decoration:none;font-size:14px;transition:.2s;border-left:3px solid transparent}
+.sidebar a:hover,.sidebar a.active{color:#F0F6FC;background:rgba(88,166,255,0.08);border-left-color:#58A6FF}
+.main{margin-left:200px;flex:1;padding:20px}
+.card{background:#161B22;border:1px solid #30363D;border-radius:8px;padding:20px;margin-bottom:15px}
+.card h3{font-size:14px;color:#58A6FF;margin-bottom:12px}
+.green{color:#3FB950}.red{color:#F85149}.blue{color:#58A6FF}.gold{color:#D29922}.purple{color:#BC8CFF}.gray{color:#8B949E}
+.badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:bold;margin-right:5px}
+.bg-blue{background:rgba(88,166,255,0.15);color:#58A6FF}
+.bg-green{background:rgba(63,185,80,0.15);color:#3FB950}
+.bg-red{background:rgba(248,81,73,0.15);color:#F85149}
+.bg-gold{background:rgba(210,153,34,0.15);color:#D29922}
+.btn{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:bold;background:#58A6FF;color:#fff}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:15px}
+pre{background:#0D1117;border:1px solid #30363D;border-radius:8px;padding:20px;font-family:'Consolas','Courier New',monospace;font-size:13px;line-height:1.6;overflow-x:auto;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="logo">量化交易平台</div>
+    <a href="/">概览看板</a><a href="/screener">多因子评分</a>
+    <a href="/portfolio">组合优化</a><a href="/backtest">策略回测</a><a href="/report" class="active">分析报告</a>
+</div>
+<div class="main">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+        <h2 style="color:#58A6FF">每日分析报告</h2>
+        <button class="btn" onclick="loadReport()">刷新报告</button>
+    </div>
+    <div class="grid4" id="rptStats"></div>
+    <div class="card"><h3>今日观察</h3><div id="rptObs"></div></div>
+    <div class="card"><h3>高分品种 Top 3</h3><div id="rptTop"></div></div>
+    <div class="card"><h3>完整文本报告</h3><pre id="rptText">加载中...</pre></div>
+</div>
+<script>
+async function loadReport() {
+    const [jsonResp, textResp] = await Promise.all([
+        fetch('/api/report?format=json').then(r=>r.json()),
+        fetch('/api/report?format=text').then(r=>r.text())
+    ]);
+
+    if (jsonResp) {
+        const m = jsonResp.market, s = jsonResp.signals;
+        document.getElementById('rptStats').innerHTML = `
+            <div class="card"><h3>全市场</h3><div class="value blue">${m.total||0}</div><div>只</div></div>
+            <div class="card"><h3>上涨 / 下跌</h3><div class="value green">${m.up||0}</div><div>vs <span class="red">${m.down||0}</span></div></div>
+            <div class="card"><h3>平均评分</h3><div class="value gold">${s.avg_score||0}</div><div>分</div></div>
+            <div class="card"><h3>风险等级</h3><div class="value purple">${jsonResp.risk_level||'N/A'}</div></div>
+        `;
+
+        document.getElementById('rptObs').innerHTML = (jsonResp.observations||[]).map(o =>
+            `<div style="padding:8px 0;border-bottom:1px solid #1A1E25">● ${o}</div>`).join('');
+
+        document.getElementById('rptTop').innerHTML = (jsonResp.top_picks||[]).map((p,i) =>
+            `<span class="badge bg-blue">#${i+1}</span> ${p.code} ${p.name} — <span class="blue">评分 ${p.total}</span> <span class="gold">${p.signal}</span><br>`).join('');
+    }
+
+    if (textResp) {
+        document.getElementById('rptText').textContent = textResp;
+    }
+}
+loadReport();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# 量化交易平台 v3.0 — Python 重写版
+# 依赖列表
+akshare>=1.14.0
+pandas>=2.0.0
+numpy>=1.24.0
+flask>=3.0.0
+scipy>=1.11.0
+matplotlib>=3.7.0
+requests>=2.31.0
