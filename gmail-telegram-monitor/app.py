@@ -59,7 +59,6 @@ async def telegram_hook(request: Request,
     chat = msg.get("chat", {})
     if chat.get("type") == "private" and msg.get("text", "").startswith("/start"):
         chat_id = str(chat["id"])
-        logging.info("Telegram setup: private chat ID %s", chat_id)
         if CHAT_ID and chat_id != CHAT_ID:
             return {"ok": True}
         send_message(chat_id, "✅ Telegram 通知测试成功。Gmail 监测仍需授权。")
