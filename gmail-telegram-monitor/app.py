@@ -62,3 +62,25 @@ async def telegram_hook(request: Request,
             return {"ok": True}
         send_message(chat_id, "✅ Telegram 通知测试成功。Gmail 监测仍需授权。")
     return {"ok": True}
+
+@app.post("/pubsub")
+async def gmail_push(request: Request, authorization: str | None = Header(None)):
+    from push_receiver import authorized_push, handle_notification
+    authorized_push(authorization)
+    return {"processed": handle_notification(await request.json(), CHAT_ID)}
+
+@app.post("/admin/renew")
+def renew_watch(x_admin_secret: str | None = Header(None)):
+    from push_receiver import start_watch
+    secret = os.getenv("ADMIN_SECRET", "")
+    if not secret or not x_admin_secret or not hmac.compare_digest(x_admin_secret, secret):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return {"expiration": start_watch()}
+
+@app.post("/admin/bootstrap")
+def bootstrap(x_admin_secret: str | None = Header(None)):
+    from mail_processor import scan
+    secret = os.getenv("ADMIN_SECRET", "")
+    if not secret or not x_admin_secret or not hmac.compare_digest(x_admin_secret, secret):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return {"marked": scan(CHAT_ID, bootstrap=True)}
