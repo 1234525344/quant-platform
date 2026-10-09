@@ -8,6 +8,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from telegram_client import send_message
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 app = FastAPI(docs_url=None, redoc_url=None)
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
@@ -17,7 +18,8 @@ def telegram(method, data):
         "https://api.telegram.org/bot" + token + "/" + method,
         json=data, timeout=20,
     )
-    result.raise_for_status()
+    if result.status_code != 200:
+        raise RuntimeError("Telegram request rejected with HTTP " + str(result.status_code))
     return result.json()
 
 def webhook_secret():
@@ -35,7 +37,7 @@ def initialize():
         })
         logging.info("Telegram webhook registered")
     except Exception:
-        logging.exception("Telegram webhook registration failed")
+        logging.error("Telegram webhook registration failed; verify Bot Token in Render")
 
 @app.get("/health")
 def health():
