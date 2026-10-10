@@ -19,7 +19,8 @@ def body_text(payload):
     return "\n".join(texts)[:12000]
 
 def summarize(sender, subject, body):
-    if not os.getenv("OPENAI_API_KEY"):
+    # Paid AI is opt-in; a stored API key alone must never enable billing.
+    if os.getenv("AI_ANALYSIS_ENABLED", "").strip().lower() != "true" or not os.getenv("OPENAI_API_KEY"):
         return f"来自：{sender}\n主题：{subject}\n\n{body[:800]}"
     from openai import OpenAI
     result = OpenAI().chat.completions.create(
