@@ -36,6 +36,6 @@ def start_watch():
     result = api().users().watch(userId="me", body={
         "topicName": os.environ["PUBSUB_TOPIC"],
         "labelIds": ["INBOX"],
-        "labelFilterBehavior": "INCLUDE",
+        "labelFilterBehavior": "include",
     }).execute()
     return result.get("expiration")
