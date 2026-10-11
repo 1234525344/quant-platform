@@ -10,10 +10,12 @@ from telegram_client import send_message
 from pydantic import BaseModel
 from polling import STATE, BaselineRequired, run_poll
 from mail_processor import ScanBusy
+from public_pages import router as public_pages_router
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 app = FastAPI(docs_url=None, redoc_url=None)
+app.include_router(public_pages_router)
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
 
 def telegram(method, data):
