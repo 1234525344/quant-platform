@@ -1,0 +1,37 @@
+name: Gmail Telegram polling
+
+on:
+  schedule:
+    - cron: '2-57/5 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: gmail-telegram-poll
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Poll protected mail monitor
+        env:
+          POLL_SECRET: ${{ secrets.GMAIL_POLL_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$POLL_SECRET" ]]; then
+            echo '::error::GMAIL_POLL_SECRET is not configured'
+            exit 1
+          fi
+          # Fixed HTTPS destination; never follow a redirect with this secret.
+          curl --silent --show-error --fail-with-body \
+            --connect-timeout 20 --max-time 180 \
+            --request POST \
+            --header "X-Poll-Secret: $POLL_SECRET" \
+            --header 'Content-Type: application/json' \
+            --data '{}' \
+            https://gmail-broker-alerts-lb.onrender.com/admin/poll
+
